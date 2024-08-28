@@ -1,29 +1,27 @@
 pipeline {
-  agent any
-  parameters {
-    choice(name: 'ACTION', choices: ['Create', 'Suppression'], description: 'Select action')
-    string(name: 'INSTANCE_ID', defaultValue: '', description: 'Instance ID for termination')
-    
-  }
-  stages {
-    stage('Checkout') {
-      steps {
-        git branch: 'main', url: 'https://github.com/redi197/ansible-ec2.git'
-      }
+    agent any
+    parameters {
+        choice(name: 'ACTION', choices: ['Create', 'Terminate'], description: 'Select action')
+        string(name: 'INSTANCE_ID', defaultValue: '', description: 'Instance ID for termination')
     }
-
-    stage('Execute Ansible') {
-      steps {
-        script {
-          if (params.ACTION == 'Create') {
-             ansiblePlaybook playbook: '/etc/ansible/create_ec2.yml', inventory: 'localhost'
-            
-          } else if (params.ACTION == 'Terminate') {
-            ansiblePlaybook playbook: 'delete_ec2.yml ', inventory: 'localhost', extraVars: [instance_id: params.INSTANCE_ID]
-          } else {
-            error "Invalid action selected. Please choose either 'Create' or 'Terminate'."
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/redi197/ansible-ec2.git'
+            }
         }
-      }
+        stage('Execute Ansible') {
+            steps {
+                script {
+                    if (params.ACTION == 'Create') {
+                        ansiblePlaybook playbook: '/etc/ansible/create_ec2.yml', inventory: 'localhost'
+                    } else if (params.ACTION == 'Terminate') {
+                        ansiblePlaybook playbook: '/etc/ansible/delete_ec2.yml', inventory: 'localhost', extraVars: [instance_id: params.INSTANCE_ID]
+                    } else {
+                        error "Invalid action selected. Please choose either 'Create' or 'Terminate'."
+                    }
+                }
+            }
+        }
     }
-  }
 }
