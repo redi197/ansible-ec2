@@ -1,0 +1,28 @@
+- name: Create RDS MySQL instance
+  hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Launch RDS MySQL instance
+      community.aws.rds_instance:
+        db_instance_identifier: my-rds-instance
+        db_instance_class: db.t3.micro
+        engine: mysql
+        engine_version: '8.0'
+        master_username: admin
+        master_user_password: '{{ db_password }}'
+        allocated_storage: 20
+        storage_type: gp2
+        publicly_accessible: yes
+        db_name: mydatabase
+        vpc_security_group_ids:
+          - sg-071624529178cb746
+        availability_zone: us-east-1b
+        backup_retention_period: 7
+        multi_az: no
+        tags:
+          Name: MyRDSInstance
+      register: rds
+
+    - name: Output RDS instance information
+      debug:
+        msg: "RDS instance created: {{ rds.db_instance.endpoint }}"
