@@ -9,7 +9,14 @@
     bucket_name: "myansibles3bucket312-{{ 100 | random }}"
 
   tasks:
-    - name: Create S3 bucket
+    - name: Check if bucket already exists
+      amazon.aws.s3_bucket_info:
+        region: "{{ aws_region }}"
+        name: "{{ bucket_name }}"
+      register: bucket_info
+      ignore_errors: yes
+
+    - name: Create S3 bucket if it doesn't exist
       amazon.aws.s3_bucket:
         name: "{{ bucket_name }}"
         state: present
@@ -18,6 +25,7 @@
         tags:
           name: myansiblebucket
           type: example
+      when: bucket_info.buckets is not defined or bucket_info.buckets | length == 0
       register: s3_result
       ignore_errors: yes
 
@@ -25,18 +33,6 @@
       debug:
         var: s3_result
         verbosity: 2
-
-    - name: Check if bucket exists
-      amazon.aws.s3_bucket:
-        name: "{{ bucket_name }}"
-        state: present
-        region: "{{ aws_region }}"
-      register: bucket_check
-      ignore_errors: yes
-
-    - name: Display bucket check result
-      debug:
-        var: bucket_check
 
     - name: List all S3 buckets
       amazon.aws.s3_bucket_info:
