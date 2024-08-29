@@ -1,20 +1,49 @@
-- name:  provisioning S3 Bucket using Ansible playbook
+- name: Provisioning S3 Bucket using Ansible playbook
   hosts: localhost
   connection: local
   gather_facts: False
   tags: provisioning
 
+  vars:
+    aws_region: us-east-1
+    bucket_name: "myansibles3bucket312-{{ 100 | random }}"
+
   tasks:
-    - name: create S3 bucket
-      s3_bucket:
-        name: myansibles3bucket312
+    - name: Create S3 bucket
+      amazon.aws.s3_bucket:
+        name: "{{ bucket_name }}"
         state: present
-        region: us-east-1
+        region: "{{ aws_region }}"
         versioning: yes
         tags:
           name: myansiblebucket
           type: example
-      register: s3_url
+      register: s3_result
+      ignore_errors: yes
 
-    - name: Display s3 url
-      debug: var=s3_url
+    - name: Display S3 bucket creation result
+      debug:
+        var: s3_result
+        verbosity: 2
+
+    - name: Check if bucket exists
+      amazon.aws.s3_bucket:
+        name: "{{ bucket_name }}"
+        state: present
+        region: "{{ aws_region }}"
+      register: bucket_check
+      ignore_errors: yes
+
+    - name: Display bucket check result
+      debug:
+        var: bucket_check
+
+    - name: List all S3 buckets
+      amazon.aws.s3_bucket_info:
+      register: all_buckets
+      ignore_errors: yes
+
+    - name: Display all S3 buckets
+      debug:
+        var: all_buckets.buckets
+        verbosity: 1
