@@ -1,5 +1,6 @@
 - name: Manage S3 Bucket
   hosts: localhost
+  connection: local
   gather_facts: no
 
   vars:
