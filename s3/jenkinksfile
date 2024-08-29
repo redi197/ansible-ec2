@@ -1,0 +1,17 @@
+pipeline {
+    agent any
+    stages {
+        
+        stage ("checkout") {
+            steps {
+              checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/redi197/ansible-ec2']]])         
+            }
+        }
+        stage('execute') {
+            steps {
+                // execute ansible playbook
+                sh'ansible-playbook /var/lib/jenkins/workspace/TP_recap/s3/create-s3.yml'
+            }
+        }
+    }
+}
