@@ -1,16 +1,30 @@
 pipeline {
     agent any
+
+    parameters {
+        choice(name: 'ACTION', choices: ['Create', 'Delete'], description: 'Choose whether to create or delete an S3 bucket')
+        string(name: 'BUCKET_NAME', defaultValue: 'my-default-bucket', description: 'Name of the S3 bucket to delete (only required if ACTION is Delete)')
+    }
+
     stages {
-        
-        stage ("checkout") {
+
+        stage('Checkout') {
             steps {
-              checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/redi197/ansible-ec2']]])         
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/redi197/ansible-ec2']]])         
             }
         }
-        stage('execute') {
+
+        stage('Execute') {
             steps {
-                // execute ansible playbook
-                sh'ansible-playbook /var/lib/jenkins/workspace/TP_recap/s3/create-s3.yml'
+                script {
+                    if (params.ACTION == 'Create') {
+                        // Execute the create S3 bucket playbook
+                        sh "ansible-playbook /var/lib/jenkins/workspace/TP_recap/s3/create-s3.yml"
+                    } else if (params.ACTION == 'Delete') {
+                        // Replace the placeholder in the delete playbook with the actual bucket name
+                        sh "ansible-playbook /var/lib/jenkins/workspace/TP_recap/s3/delete-s3.yml -e bucket_name=${params.BUCKET_NAME}"
+                    }
+                }
             }
         }
     }
