@@ -8,7 +8,7 @@
 
   tasks:
     - name: Delete an S3 bucket
-      amazon.aws.s3_bucket:  # Changé de community.aws.s3_bucket à amazon.aws.s3_bucket
+      amazon.aws.s3_bucket:
         name: "{{ bucket_name }}"
         state: absent
         region: us-east-1  # Assurez-vous que c'est la bonne région
