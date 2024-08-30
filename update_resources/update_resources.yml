@@ -1,0 +1,47 @@
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    old_security_group_name: "{{ old_security_group_name }}"
+    new_security_group_name: "{{ new_security_group_name }}"
+    region: "{{ region }}"
+
+  tasks:
+    - name: Get the current security group
+      amazon.aws.ec2_security_group_info:
+        filters:
+          group-name: "{{ old_security_group_name }}"
+        region: "{{ region }}"
+      register: sg_info
+
+    - name: Fail if the security group does not exist
+      fail:
+        msg: "Security group {{ old_security_group_name }} does not exist in region {{ region }}."
+      when: sg_info.security_groups | length == 0
+
+    - name: Update security group name and description
+      amazon.aws.ec2_security_group:
+        group_id: "{{ sg_info.security_groups[0].group_id }}"
+        name: "{{ new_security_group_name }}"
+        description: "{{ sg_info.security_groups[0].description }}"
+        vpc_id: "{{ sg_info.security_groups[0].vpc_id }}"
+        region: "{{ region }}"
+        rules: "{{ sg_info.security_groups[0].ip_permissions }}"
+        rules_egress: "{{ sg_info.security_groups[0].ip_permissions_egress }}"
+        state: present
+
+    - name: Add or update security group rules (optional)
+      amazon.aws.ec2_security_group:
+        group_id: "{{ sg_info.security_groups[0].group_id }}"
+        region: "{{ region }}"
+        rules:
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: "0.0.0.0/0"
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: "0.0.0.0/0"
+        state: present

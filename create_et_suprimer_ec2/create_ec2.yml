@@ -8,7 +8,7 @@
     state_1: "present"
     instance_type_1: "t2.micro"
     security: "ansible-security-group"
-    key_name: "key.pem"
+    key_name: "key"
 
   tasks:
   - name: generate an OpenSSH keypair
