@@ -1,47 +1,41 @@
-- hosts: localhost
-  connection: local
-  gather_facts: false
-
+- name: Update EC2 instance and install package
+  hosts: localhost
+  gather_facts: no
   vars:
-    old_security_group_name: "{{ old_security_group_name }}"
-    new_security_group_name: "{{ new_security_group_name }}"
+    instance_name: "{{ target_instance }}"
+    package_name: "{{ package_name }}"
     region: "{{ region }}"
-
   tasks:
-    - name: Get the current security group
-      amazon.aws.ec2_security_group_info:
+    - name: Get the instance information
+      amazon.aws.ec2_instance_info:
+        region: "{{ region }}"
         filters:
-          group-name: "{{ old_security_group_name }}"
-        region: "{{ region }}"
-      register: sg_info
+          "tag:Name": "{{ instance_name }}"
+      register: instance_info
 
-    - name: Fail if the security group does not exist
+    - name: Fail if no instance found
       fail:
-        msg: "Security group {{ old_security_group_name }} does not exist in region {{ region }}."
-      when: sg_info.security_groups | length == 0
+        msg: "No instance found with name '{{ instance_name }}' in region '{{ region }}'."
+      when: instance_info.instances | length == 0
 
-    - name: Update security group name and description
-      amazon.aws.ec2_security_group:
-        group_id: "{{ sg_info.security_groups[0].group_id }}"
-        name: "{{ new_security_group_name }}"
-        description: "{{ sg_info.security_groups[0].description }}"
-        vpc_id: "{{ sg_info.security_groups[0].vpc_id }}"
-        region: "{{ region }}"
-        rules: "{{ sg_info.security_groups[0].ip_permissions }}"
-        rules_egress: "{{ sg_info.security_groups[0].ip_permissions_egress }}"
-        state: present
+    - name: Set instance ID variable
+      set_fact:
+        instance_id: "{{ instance_info.instances[0].instance_id }}"
 
-    - name: Add or update security group rules (optional)
-      amazon.aws.ec2_security_group:
-        group_id: "{{ sg_info.security_groups[0].group_id }}"
+    - name: Update the instance name tag
+      amazon.aws.ec2_tag:
         region: "{{ region }}"
-        rules:
-          - proto: tcp
-            from_port: 80
-            to_port: 80
-            cidr_ip: "0.0.0.0/0"
-          - proto: tcp
-            from_port: 22
-            to_port: 22
-            cidr_ip: "0.0.0.0/0"
+        resource: "{{ instance_id }}"
         state: present
+        tags:
+          Name: "{{ instance_name }}-updated"
+      delegate_to: localhost
+
+    - name: Install package on the selected instance
+      ansible.builtin.yum:
+        name: "{{ package_name }}"
+        state: present
+      delegate_to: "{{ instance_name }}"
+
+
+

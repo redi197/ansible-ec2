@@ -17,9 +17,9 @@ pipeline {
             steps {
                 script {
                     if (params.ACTION == 'Create') {
-                        ansiblePlaybook playbook: '/etc/ansible/create_ec2.yml', inventory: 'localhost'
+                        ansiblePlaybook playbook: '/var/lib/jenkins/workspace/pipline/create_et_suprimer_ec2/create_ec2.yml/create_ec2.yml', inventory: 'localhost'
                     } else if (params.ACTION == 'Terminate') {
-                        ansiblePlaybook playbook: '/etc/ansible/delete_ec2.yml', inventory: 'localhost', extraVars: [instance_id: params.INSTANCE_ID]
+                        ansiblePlaybook playbook: '/var/lib/jenkins/workspace/pipline/create_et_suprimer_ec2/create_ec2.yml/delete_ec2.yml', inventory: 'localhost', extraVars: [instance_id: params.INSTANCE_ID]
                     } else {
                         error "Invalid action selected. Please choose either 'Create' or 'Terminate'."
                     }
