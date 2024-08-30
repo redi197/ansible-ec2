@@ -1,28 +1,70 @@
-- name: Provisionner une instance EC2
-  hosts: localhost
-  gather_facts: no
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
   vars:
-    instance_type: t2.micro
-    ami_id: ami-0e86e20dae9224db8  # Remplacez par un AMI valide pour votre région
-    region: us-east-1
-    keypair: key  # Remplacez par votre paire de clés
-    security_group: ansible-security-group  # Remplacez par votre groupe de sécurité
+    region_1: "us-east-1"
+    state_1: "present"
+    instance_type_1: "t2.micro"
+    security: "ansible-security-group"
+    key_name: "key.pem"
 
   tasks:
-    - name: Lancer une nouvelle instance EC2
-      amazon.aws.ec2_instance:
-        key_name: "{{ keypair }}"
-        instance_type: "{{ instance_type }}"
-        image_id: "{{ ami_id }}"
-        wait: yes
-        region: "{{ region }}"
-        security_groups: "{{ security_group }}"
-        count: 1
-        tags:  # Correct parameter for tagging instances
-          Name: "Jenkins-Ansible-EC2"
-          Environment: "Development"
-      register: ec2
+  - name: generate an OpenSSH keypair
+    community.crypto.openssh_keypair:
+      path: "/tmp/{{ key_name }}"
+      state: "{{ state_1 }}"
 
-    - name: Afficher les informations sur les instances créées
-      debug:
-        var: ec2
+  - name: create security group
+    amazon.aws.ec2_security_group:
+      rules:
+        - proto: tcp
+          from_port: 8080
+          to_port: 8080
+          cidr_ip: "0.0.0.0/0"
+        - proto: tcp
+          from_port: 22
+          to_port: 22
+          cidr_ip: "0.0.0.0/0"
+      rules_egress:
+        - from_port: 0
+          proto: tcp
+          to_port: 0
+          cidr_ip: 0.0.0.0/0
+          group_name: "ansible group name"
+          group_desc: EC2 group
+      region: "{{ region_1 }}"
+      state: "{{ state_1 }}"
+      name: "{{ security }}"
+      description: "ansible created this"
+
+  - name: get ami-id
+    amazon.aws.ec2_ami_info:
+      owners: 099720109477
+      filters:
+        name: "ubuntu/images/hvm-ssd/ubuntu-*-22.04-amd64-server-*"
+      region: "{{ region_1 }}"
+    register: result
+
+  - name: create ec2 key pair
+    amazon.aws.ec2_key:
+      name: "{{ key_name }}"
+      region: "{{ region_1 }}"
+      state: "{{ state_1 }}"
+      key_material: "{{ lookup('file', '/tmp/{{ key_name }}.pub') }}"
+    no_log: false
+    register: aws_ec2_key_pair
+
+  - name: create ec2
+    amazon.aws.ec2_instance:
+      name: "Ansible-EC2"
+      region: "{{ region_1 }}"
+      image_id: "{{ result.images[-1].image_id }}"
+      instance_type: "{{ instance_type_1 }}"
+      key_name: "{{ key_name }}"
+      security_group: "{{ security }}"
+      state: "{{ state_1 }}"
+
+#  - name: rename key
+#    shell: "mv /tmp/{{ key_name }} /tmp/{{ key_name }}.pem && chmod 400 /tmp/{{ key_name }}.pem"
