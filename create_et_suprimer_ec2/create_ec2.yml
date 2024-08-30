@@ -16,15 +16,7 @@
       path: "/tmp/{{ key_name }}"
       state: "{{ state_1 }}"
 
-  - name: Check if security group exists
-    amazon.aws.ec2_security_group_info:
-      filters:
-        group-name: "{{ security }}"
-      region: "{{ region_1 }}"
-    register: security_group_info
-    ignore_errors: yes
-
-  - name: Create security group if not exists
+  - name: Attempt to create security group (ignores if already exists)
     amazon.aws.ec2_security_group:
       name: "{{ security }}"
       description: "ansible created this"
@@ -44,7 +36,7 @@
           to_port: 0
           cidr_ip: "0.0.0.0/0"
       state: present
-    when: security_group_info.security_groups | length == 0
+    ignore_errors: yes
 
   - name: Get AMI ID
     amazon.aws.ec2_ami_info:
