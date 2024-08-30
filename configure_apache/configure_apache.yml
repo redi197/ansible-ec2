@@ -5,7 +5,7 @@
 
   vars:
     region: us-east-1
-    instance_id: sg-082a62deb290a7e74
+    instance_id: i-024da4747d4a98de1
     ec2_user: ubuntu
     key_file: ~/.ssh/jenkinskey.pem
 
