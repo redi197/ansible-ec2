@@ -8,7 +8,7 @@
     state_1: "present"
     instance_type_1: "t2.micro"
     security: "ansible-security-group"
-    key_name: "key.pem"
+    key_name: "key"
 
   tasks:
   - name: generate an OpenSSH keypair
@@ -66,5 +66,5 @@
       security_group: "{{ security }}"
       state: "{{ state_1 }}"
 
-#  - name: rename key
-#    shell: "mv /tmp/{{ key_name }} /tmp/{{ key_name }}.pem && chmod 400 /tmp/{{ key_name }}.pem"
+  - name: rename key
+    shell: "mv /tmp/{{ key_name }} /tmp/{{ key_name }}.pem && chmod 400 /tmp/{{ key_name }}.pem"
