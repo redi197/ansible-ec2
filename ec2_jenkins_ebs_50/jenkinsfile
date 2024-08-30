@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'INSTANCE_NAME', defaultValue: 'MyNewInstance', description: 'Nom de la nouvelle instance EC2')
+    }
+
+    environment {
+        ANSIBLE_PLAYBOOK_PATH = '/var/lib/jenkins/workspace/instance_jenkins/ec2_jenkins_ebs_50/ec2_jenkins.yml'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Récupération du dépôt Git
+                checkout([$class: 'GitSCM', 
+                          branches: [[name: '*/main']], 
+                          extensions: [], 
+                          userRemoteConfigs: [[url: 'https://github.com/redi197/ansible-ec2']]])
+            }
+        }
+
+        stage('Run Ansible Playbook') {
+            steps {
+                // Exécution du playbook Ansible avec le paramètre INSTANCE_NAME
+                sh """
+                    ansible-playbook ${ANSIBLE_PLAYBOOK_PATH} \
+                        --extra-vars "instance_name=${INSTANCE_NAME}"
+                """
+            }
+        }
+    }
+}
