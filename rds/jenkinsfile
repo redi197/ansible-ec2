@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'ACTION', choices: ['Create', 'Delete'], description: 'Choose whether to create or delete an RDS instance')
+        string(name: 'DB_ID', defaultValue: 'My-default-db', description: 'ID of the RDS instance to create or delete')
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/redi197/ansible-ec2']]])         
+            }
+        }
+
+        stage('Execute') {
+            steps {
+                script {
+                    if (params.ACTION == 'Create') {
+                        // Execute the create RDS instance playbook
+                        sh "ansible-playbook /var/lib/jenkins/workspace/rds/rds/create_rds.yml -e DB_ID=${params.DB_ID}"
+                    } else if (params.ACTION == 'Delete') {
+                        // Execute the delete RDS instance playbook
+                        sh "ansible-playbook /var/lib/jenkins/workspace/rds/rds/delete_rds.yml -e DB_ID=${params.DB_ID}"
+                    }
+                }
+            }
+        }
+    }
+}

@@ -67,4 +67,4 @@
       state: "{{ state_1 }}"
 
   - name: rename key
-    shell: mv /tmp/{{ key_name }} /tmp/{{ key_name }}.pem && chmod 400 /tmp/{{ key_name }}.pem
+    shell: "mv /tmp/{{ key_name }} /tmp/{{ key_name }}.pem && chmod 400 /tmp/{{ key_name }}.pem"
