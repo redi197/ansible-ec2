@@ -5,11 +5,11 @@
 
   vars:
     region: us-east-1
-    security_group_id: sg-03907cedf72731f32
+    security_group_id: "{{ security_group_id }}"
     security_group_name: "Updated_SG"
     security_group_description: "Updated security group for EC2 instances"
     new_instance_name: "Updated-EC2-Instance"
-    ec2_instance_id: i-0ec33002303a55643
+    ec2_instance_id: "{{ ec2_instance_id }}"
 
   tasks:
     - name: Update Security Group - Add rule to allow HTTPS traffic
