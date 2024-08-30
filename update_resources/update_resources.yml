@@ -1,38 +1,43 @@
-- name: Update EC2 instance and install package
+- name: Update AWS resources
   hosts: localhost
+  gather_facts: false
   connection: local
-  gather_facts: no
+
   vars:
-    instance_name: "{{ target_instance }}"
-    package_name: "{{ package_name }}"
-    region: "{{ region }}"
+    region: us-east-1
+    security_group_id: sg-03907cedf72731f32
+    security_group_name: "Updated_SG"
+    security_group_description: "Updated security group for EC2 instances"
+    new_instance_name: "Updated-EC2-Instance"
+    ec2_instance_id: i-0ec33002303a55643
+
   tasks:
-    - name: Get the instance information
-      amazon.aws.ec2_instance_info:
+    - name: Update Security Group - Add rule to allow HTTPS traffic
+      amazon.aws.ec2_security_group:
+        group_id: "{{ security_group_id }}"
+        name: "{{ security_group_name }}"  
+        description: "{{ security_group_description }}"
         region: "{{ region }}"
-        filters:
-          "tag:Name": "{{ instance_name }}"
-      register: instance_info
-
-    - name: Fail if no instance found
-      fail:
-        msg: "No instance found with name '{{ instance_name }}' in region '{{ region }}'."
-      when: instance_info.instances | length == 0
-
-    - name: Set instance ID variable
-      set_fact:
-        instance_id: "{{ instance_info.instances[0].instance_id }}"
-
-    - name: Update the instance name tag
-      amazon.aws.ec2_tag:
-        region: "{{ region }}"
-        resource: "{{ instance_id }}"
+        rules:
+          - proto: tcp
+            from_port: 443
+            to_port: 443
+            cidr_ip: 0.0.0.0/0
         state: present
-        tags:
-          Name: "{{ instance_name }}-updated"
+      register: sg_update_result
 
-    - name: Install package on the selected instance
-      ansible.builtin.command:
-        cmd: "ssh -i ~/.ssh/jenkinskey.pem ubuntu@{{ instance_info.instances[0].public_ip_address }} 'sudo apt update && sudo apt install -y {{ package_name }}'"
-      args:
-        warn: false
+    - name: Display Security Group Update Result
+      debug:
+        var: sg_update_result
+
+    - name: Update EC2 Instance Name
+      amazon.aws.ec2_tag:
+        resource: "{{ ec2_instance_id }}"
+        region: "{{ region }}"
+        tags:
+          Name: "{{ new_instance_name }}"
+      register: ec2_tag_update_result
+
+    - name: Display EC2 Instance Tag Update Result
+      debug:
+        var: ec2_tag_update_result
