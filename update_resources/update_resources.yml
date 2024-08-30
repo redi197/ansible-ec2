@@ -1,5 +1,5 @@
 - name: Update EC2 instance and install package
-  hosts: localhost
+  hosts: webservers
   gather_facts: no
   vars:
     instance_name: "{{ target_instance }}"
