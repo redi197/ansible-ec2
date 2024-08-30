@@ -1,0 +1,26 @@
+pipeline {
+    agent any
+
+    environment {
+        ANSIBLE_PLAYBOOK_PATH = '/var/lib/jenkins/workspace/configure_apache/configure_apache/configure_apache.yml'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Récupération du dépôt Git
+                checkout([$class: 'GitSCM', 
+                          branches: [[name: '*/main']], 
+                          extensions: [], 
+                          userRemoteConfigs: [[url: 'https://github.com/redi197/ansible-ec2']]])
+            }
+        }
+        
+        stage('Run Ansible Playbook') {
+            steps {
+                // Exécution du playbook Ansible
+                sh "ansible-playbook ${ANSIBLE_PLAYBOOK_PATH}"
+            }
+        }
+    }
+}
