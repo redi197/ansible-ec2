@@ -5,7 +5,7 @@
 
   vars:
     region: us-east-1
-    instance_id: {{instance_id}}
+    instance_id: i-06c41664d525b3465
     ec2_user: ubuntu  # Utilisé pour Ubuntu/Debian
     key_file: ~/.ssh/jenkinskey.pem  # Chemin de la clé privée
 
