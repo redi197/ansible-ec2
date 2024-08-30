@@ -2,11 +2,12 @@
   hosts: localhost
   gather_facts: false
   connection: local
+
   vars:
     region: us-east-1
     instance_id: i-06c41664d525b3465
-    ec2_user: ubuntu
-    key_file: ~/.ssh/jenkinskey.pem
+    ec2_user: ubuntu  # Utilisé pour Ubuntu/Debian
+    key_file: ~/.ssh/jenkinskey.pem  # Chemin de la clé privée
 
   tasks:
     - name: Get EC2 Instance Public IP
@@ -39,7 +40,7 @@
         ansible_ssh_private_key_file: "{{ key_file }}"
         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
       become: yes
-      become_method: sudo
+
 
     - name: Start and enable Apache service
       ansible.builtin.systemd:
@@ -52,4 +53,3 @@
         ansible_ssh_private_key_file: "{{ key_file }}"
         ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
       become: yes
-      become_method: sudo
