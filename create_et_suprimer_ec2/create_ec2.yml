@@ -11,13 +11,24 @@
     key_name: "key.pem"
 
   tasks:
-  - name: generate an OpenSSH keypair
+  - name: Generate an OpenSSH keypair
     community.crypto.openssh_keypair:
       path: "/tmp/{{ key_name }}"
       state: "{{ state_1 }}"
 
-  - name: create security group
+  - name: Check if security group exists
+    amazon.aws.ec2_security_group_info:
+      filters:
+        group-name: "{{ security }}"
+      region: "{{ region_1 }}"
+    register: security_group_info
+    ignore_errors: yes
+
+  - name: Create security group if not exists
     amazon.aws.ec2_security_group:
+      name: "{{ security }}"
+      description: "ansible created this"
+      region: "{{ region_1 }}"
       rules:
         - proto: tcp
           from_port: 8080
@@ -28,18 +39,14 @@
           to_port: 22
           cidr_ip: "0.0.0.0/0"
       rules_egress:
-        - from_port: 0
-          proto: tcp
+        - proto: tcp
+          from_port: 0
           to_port: 0
-          cidr_ip: 0.0.0.0/0
-          group_name: "ansible group name"
-          group_desc: EC2 group
-      region: "{{ region_1 }}"
-      state: "{{ state_1 }}"
-      name: "{{ security }}"
-      description: "ansible created this"
+          cidr_ip: "0.0.0.0/0"
+      state: present
+    when: security_group_info.security_groups | length == 0
 
-  - name: get ami-id
+  - name: Get AMI ID
     amazon.aws.ec2_ami_info:
       owners: 099720109477
       filters:
@@ -47,7 +54,7 @@
       region: "{{ region_1 }}"
     register: result
 
-  - name: create ec2 key pair
+  - name: Create EC2 key pair
     amazon.aws.ec2_key:
       name: "{{ key_name }}"
       region: "{{ region_1 }}"
@@ -56,7 +63,7 @@
     no_log: false
     register: aws_ec2_key_pair
 
-  - name: create ec2
+  - name: Create EC2 instance
     amazon.aws.ec2_instance:
       name: "Ansible-EC2"
       region: "{{ region_1 }}"

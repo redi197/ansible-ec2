@@ -1,15 +1,18 @@
 pipeline {
     agent any
+
     parameters {
         choice(name: 'ACTION', choices: ['Create', 'Terminate'], description: 'Select action')
         string(name: 'INSTANCE_ID', defaultValue: '', description: 'Instance ID for termination')
     }
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/redi197/ansible-ec2.git'
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/redi197/ansible-ec2']]])
             }
         }
+
         stage('Execute Ansible') {
             steps {
                 script {
