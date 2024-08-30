@@ -35,7 +35,7 @@
         state: present
       register: ec2_key
 
-    - name: create KMS key
+    - name: Create KMS key
       amazon.aws.kms_key:
         description: "KMS key for encrypting EBS volumes"
         region: "{{ region }}"
@@ -47,7 +47,7 @@
           Name: "My KMS Key"
       register: kms_key
 
-    - name: Display the key pair
+    - name: Display the KMS key
       debug:
         msg: "The KMS Key ID is {{ kms_key.key_id }}"
 
@@ -100,6 +100,10 @@
     - name: Display the instance ID
       debug:
         msg: "The instance ID is {{ ec2_instance.instances[0].instance_id }}"
+
+    - name: Pause for 1 minute to ensure EC2 instance is fully running
+      pause:
+        minutes: 1
 
     - name: Create EBS volume
       amazon.aws.ec2_vol:
