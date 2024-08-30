@@ -6,14 +6,16 @@
   vars:
     region: us-east-1
     security_group_id: "{{ security_group_id }}"
+    security_group_name: "Updated_SG"
     security_group_description: "Updated security group for EC2 instances"
-    new_instance_name: "{{ new_instance_name }}"
+    new_instance_name: "Updated-EC2-Instance"
     ec2_instance_id: "{{ ec2_instance_id }}"
 
   tasks:
     - name: Update Security Group - Add rule to allow HTTPS traffic
       amazon.aws.ec2_security_group:
         group_id: "{{ security_group_id }}"
+        name: "{{ security_group_name }}"
         description: "{{ security_group_description }}"
         region: "{{ region }}"
         rules:
