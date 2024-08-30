@@ -1,0 +1,54 @@
+- name: Configure Apache Web Server on EC2 Instance
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  vars:
+    region: us-east-1
+    instance_id: {{instance_id}}
+    ec2_user: ubuntu  # Utilisé pour Ubuntu/Debian
+    key_file: ~/.ssh/jenkinskey.pem  # Chemin de la clé privée
+
+  tasks:
+    - name: Get EC2 Instance Public IP
+      amazon.aws.ec2_instance_info:
+        region: "{{ region }}"
+        instance_ids:
+          - "{{ instance_id }}"
+      register: ec2_info
+
+    - name: Extract Public IP
+      set_fact:
+        public_ip: "{{ ec2_info.instances[0].public_ip_address }}"
+
+    - name: Wait for SSH to become available
+      wait_for:
+        host: "{{ public_ip }}"
+        port: 22
+        delay: 10
+        timeout: 300
+        state: started
+
+    - name: Install Apache on EC2 using apt-get
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+        update_cache: yes
+      delegate_to: "{{ public_ip }}"
+      remote_user: "{{ ec2_user }}"
+      vars:
+        ansible_ssh_private_key_file: "{{ key_file }}"
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+      become: yes
+
+    - name: Start and enable Apache service
+      ansible.builtin.systemd:
+        name: apache2
+        state: started
+        enabled: yes
+      delegate_to: "{{ public_ip }}"
+      remote_user: "{{ ec2_user }}"
+      vars:
+        ansible_ssh_private_key_file: "{{ key_file }}"
+        ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+      become: yes

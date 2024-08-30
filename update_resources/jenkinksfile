@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'SECURITY_GROUP_ID', defaultValue: 'security-group-id', description: 'ID of the security group to update')
+        string(name: 'EC2_INSTANCE_ID', defaultValue: 'instance-id', description: 'ID of the EC2 instance to update')
+    }
+
+    environment {
+        AWS_REGION = 'us-east-1'
+        SECURITY_GROUP_NAME = 'Updated_SG'
+        SECURITY_GROUP_DESCRIPTION = 'Updated security group for EC2 instances'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', 
+                          branches: [[name: '*/main']], 
+                          userRemoteConfigs: [[url: 'https://github.com/redi197/ansible-ec2']]
+                         ])
+            }
+        }
+        
+        stage('List Files') {
+            steps {
+                script {
+                    sh 'ls -la'
+                }
+            }
+        }
+
+        stage('Update AWS Resources') {
+            steps {
+                script {
+                    sh """
+                    ansible-playbook -i localhost, /var/lib/jenkins/workspace/update_resource/update_resources/update_resources.yml \
+                    -e "region=${AWS_REGION}" \
+                    -e "security_group_id=${params.SECURITY_GROUP_ID}" \
+                    -e "security_group_name=${SECURITY_GROUP_NAME}" \
+                    -e "security_group_description=${SECURITY_GROUP_DESCRIPTION}" \
+                    -e "ec2_instance_id=${params.EC2_INSTANCE_ID}" \
+                    """
+                }
+            }
+        }
+    }
+}
