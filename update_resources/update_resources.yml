@@ -1,5 +1,6 @@
 - name: Update EC2 instance and install package
-  hosts: webservers
+  hosts: localhost
+  connection: local
   gather_facts: no
   vars:
     instance_name: "{{ target_instance }}"
@@ -29,13 +30,9 @@
         state: present
         tags:
           Name: "{{ instance_name }}-updated"
-      delegate_to: localhost
 
     - name: Install package on the selected instance
-      ansible.builtin.yum:
-        name: "{{ package_name }}"
-        state: present
-      delegate_to: "{{ instance_name }}"
-
-
-
+      ansible.builtin.command:
+        cmd: "ssh -i ~/.ssh/jenkinskey.pem ubuntu@{{ instance_info.instances[0].public_ip_address }} 'sudo apt update && sudo apt install -y {{ package_name }}'"
+      args:
+        warn: false
